@@ -1,0 +1,34 @@
+name: nightwatch tests
+on:
+  workflow_call: 
+    inputs:
+      preview_url:
+        type: string
+        required: true
+      publisher:
+        type: string
+        required: true
+
+jobs:
+  tests: 
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    env:
+      HOST: ${{ inputs.preview_url }}
+      PUBLISHER: ${{ inputs.publisher }}
+
+    environment: Deployment
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Add hurl repo
+        run: sudo apt-add-repository -y ppa:lepapareil/hurl
+
+      - name: Cache and install hurl
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: hurl
+          version: 1.0
+
+      - name: Run duplication hurl tests
+        run: hurl --variable host="$HOST" --variable publisher="$PUBLISHER" --variable api_token=${{ secrets.SERVICE_SECRET_TOKEN }} --test test/duplicate.hurl
